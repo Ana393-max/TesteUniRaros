@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ pedido.titulo }}</h2>
+    <p><strong>Descrição:</strong> {{ pedido.descricao }}</p>
+    <p><strong>Status:</strong> {{ pedido.status }}</p>
+    <p><strong>Usuário:</strong> {{ pedido.usuario.username }}</p>
+    <p><strong>Criado em:</strong> {{ pedido.criado_em|date:"d/m/Y H:i" }}</p>
+    <p><strong>Última atualização:</strong> {{ pedido.atualizado_em|date:"d/m/Y H:i" }}</p>
+
+    <a href="{% url 'pedido-ajuda-lista' %}" class="btn btn-secondary">Voltar</a>
+    {% if pedido.usuario == user %}
+        <a href="{% url 'pedido-ajuda-editar' pedido.pk %}" class="btn btn-warning">Editar</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <h2>Obrigado pelo seu pedido de ajuda!</h2>
+    <p>Nosso time irá analisar e responder em breve.</p>
+    <a href="{% url 'pedido-ajuda-lista' %}" class="btn btn-primary">Voltar para a lista</a>
+</div>
+{% endblock %}

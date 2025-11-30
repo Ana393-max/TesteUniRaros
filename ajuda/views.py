@@ -1,43 +1,46 @@
-from django.views.generic import CreateView, ListView, DetailView, UpdateView
+from django.views.generic import CreateView
 from django.urls import reverse_lazy
-from django.shortcuts import render
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.contrib import messages
 from .models import PedidoAjuda
+from .forms import PedidoAjudaForm  # ✅ USAR O FORM CUSTOMIZADO
 
-# Criar pedido de ajuda
-class PedidoAjudaCreateView(LoginRequiredMixin, CreateView):
+@method_decorator(login_required, name='dispatch')
+class PedidoAjudaCreateView(CreateView):
     model = PedidoAjuda
-    fields = ['titulo', 'descricao']  # o usuário e status serão automáticos
+    form_class = PedidoAjudaForm  # ✅ USAR O FORM CUSTOMIZADO
     template_name = 'ajuda/form.html'
-    success_url = reverse_lazy('pedido-ajuda-lista')
+    success_url = reverse_lazy('ajuda:obrigatorio')  # ✅ CORRIGIDO: usar app_name
 
     def form_valid(self, form):
-        form.instance.usuario = self.request.user  # vincula ao usuário logado
+        form.instance.usuario = self.request.user
+        
+        # ✅ MENSAGEM DE SUCESSO
+        messages.success(
+            self.request, 
+            'Seu pedido de ajuda foi enviado com sucesso! '
+            'Nossa equipe entrará em contato em breve.'
+        )
+        
+        # ✅ O SIGNAL VAI ENVIAR O EMAIL AUTOMATICAMENTE
         return super().form_valid(form)
 
-# Listar pedidos
-class PedidoAjudaListView(LoginRequiredMixin, ListView):
-    model = PedidoAjuda
-    template_name = 'ajuda/list.html'
-    context_object_name = 'pedidos'
-
-# Detalhar pedido
-class PedidoAjudaDetailView(LoginRequiredMixin, DetailView):
-    model = PedidoAjuda
-    template_name = 'ajuda/detail.html'
-    context_object_name = 'pedido'
-
-# Editar pedido (só o dono pode editar)
-class PedidoAjudaUpdateView(LoginRequiredMixin, UpdateView):
-    model = PedidoAjuda
-    fields = ['titulo', 'descricao', 'status']
-    template_name = 'ajuda/form.html'
-    success_url = reverse_lazy('pedido-ajuda-lista')
-
-    def get_queryset(self):
-        # restringe para que só o usuário dono edite
-        return PedidoAjuda.objects.filter(usuario=self.request.user)
-
-# Página de agradecimento (caso queira manter)
+@login_required
 def pedido_ajuda_obrigado(request):
+    """✅ PÁGINA DE AGRADECIMENTO/OBRIGADO"""
     return render(request, 'ajuda/obrigado.html')
+
+@login_required
+def ajuda_redirect(request):
+    """✅ REDIRECIONAMENTO INTELIGENTE"""
+    if request.user.is_authenticated:
+        return redirect('ajuda:pedido_ajuda')  # ✅ CORRIGIDO: usar app_name
+    return render(request, 'ajuda/precisa_login.html')
+
+@login_required
+def meus_pedidos_ajuda(request):
+    """✅ LISTA OS PEDIDOS DE AJUDA DO USUÁRIO (NOVO)"""
+    pedidos = PedidoAjuda.objects.filter(usuario=request.user).order_by('-criado_em')
+    return render(request, 'ajuda/meus_pedidos.html', {'pedidos': pedidos})
